@@ -1,0 +1,62 @@
+import { Request, Response} from 'express'
+import { AuthRepository, CustomError, RegisterUser, RegisterUserDto } from '../../domain';
+import { JwtAdapter } from '../../config';
+import { UserModel } from '../../data/mongodb';
+
+
+export class AuthController {
+
+    //DI
+    constructor(
+        private readonly authRepository: AuthRepository,
+    ) {}
+
+    private handleError = (error: unknown,  res:Response ) => {
+        if(error instanceof CustomError )   {
+            return res.status( res.statusCode).json({ error:error.message });
+        }
+        console.error(error);
+        return res.status( 500).json({error: 'Internal Eroor server'});
+     }
+
+    registerUser =  (req: Request, res: Response) => {
+        const [error,registerUserDtos] = RegisterUserDto.create(req.body)
+
+        if (error) return res.status(400).json({ error });
+
+             
+        this.authRepository.register(registerUserDtos!)
+        .then( async(user) => {
+
+            res.json({
+                user: user,
+                token: await JwtAdapter.generateToken({ id: user.id })  
+                
+       });
+
+    })
+    .catch(error => this.handleError( error, res ));
+
+
+    }
+
+
+    loginUser = (req: Request, res: Response) => {
+        res.json('LoginUser AuthController')
+
+
+    }
+
+    getUsers = (req: Request, res: Response) => {
+        UserModel.find()
+        .then(users => {
+             res.json ({
+               // users,
+                //token:req.body.payload
+                user:req.body.user
+        })
+    })
+        .catch(()=> res.status(500).json({error:'Internal server error'}));    
+
+    }
+}

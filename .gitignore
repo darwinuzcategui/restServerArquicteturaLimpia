@@ -1,0 +1,9 @@
+
+
+
+mongo/
+.env
+.vscode
+node_modules/
+dist/
+build/
